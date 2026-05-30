@@ -62,34 +62,51 @@ def convertir_a_jpg(image_bytes, filename):
     """
     Detecta formato y convierte a JPG si es necesario
     Retorna: (jpg_bytes, formato_original, fue_convertida)
+    Maneja: JPG, PNG, HEIC, WEBP, BMP, TIFF, GIF, MPO
     """
     try:
-        img = Image.open(io.BytesIO(image_bytes))
-        original_format = img.format or filename.split('.')[-1].upper()
+        # Detectar formato por extensión o contenido
+        ext = filename.split('.')[-1].upper()
         
-        # Si ya es JPG, retorna tal cual
+        # Para JPG/JPEG, intentar primero sin conversión
+        if ext in ['JPEG', 'JPG']:
+            try:
+                img = Image.open(io.BytesIO(image_bytes))
+                if img.format and img.format.upper() in ['JPEG', 'JPG']:
+                    return image_bytes, 'JPG', False
+            except Exception:
+                pass  # Seguir con conversión
+        
+        # Intentar abrir con PIL
+        img = Image.open(io.BytesIO(image_bytes))
+        original_format = img.format or ext
+        
+        # Si ya es JPG válido, retorna tal cual
         if original_format.upper() in ['JPEG', 'JPG']:
             return image_bytes, original_format, False
         
-        # Convertir a JPG
+        # Convertir a RGB si es necesario
         if img.mode in ('RGBA', 'LA', 'P'):
-            # Convertir a RGB si tiene transparencia
             rgb_img = Image.new('RGB', img.size, (255, 255, 255))
-            rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            if img.mode == 'RGBA':
+                rgb_img.paste(img, mask=img.split()[3])
+            else:
+                rgb_img.paste(img)
             img = rgb_img
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Guardar como JPG en memoria
+        # Guardar como JPG en memoria con calidad alta
         jpg_buffer = io.BytesIO()
-        img.save(jpg_buffer, format='JPEG', quality=95)
+        img.save(jpg_buffer, format='JPEG', quality=95, optimize=False)
         jpg_bytes = jpg_buffer.getvalue()
         
         return jpg_bytes, original_format, True
     
     except Exception as e:
-        st.warning(f"⚠️ Error convirtiendo {filename}: {str(e)[:50]}")
-        return None, None, False
+        error_msg = str(e)[:50]
+        st.warning(f"⚠️ {filename}: {error_msg}")
+        return None, filename.split('.')[-1].upper(), False
 
 def procesar_recibo_vision(client, image_base64, imagen_nombre):
     """Extrae datos del recibo con Claude Vision"""
