@@ -387,8 +387,8 @@ with col1:
                                         st.caption(f"**{campo}:** {valor}")
                         st.divider()
 
-else:
-    # Sidebar derecho - Info
+# Sidebar derecho - Info
+with col2:
     st.subheader("ℹ️ Información")
     st.info("""
     ### ⚡ Características
