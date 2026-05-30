@@ -10,13 +10,6 @@ import tempfile
 from PIL import Image
 import io
 
-# Registrar HEIC/HEIF con Pillow
-try:
-    from pillow_heif import register_heif_opener
-    register_heif_opener()
-except ImportError:
-    pass  # pillow-heif no está instalado, seguir sin HEIC
-
 # Mapeo de comercios
 COMERCIOS_CAMPOS = {
     "carnes_finas_san_juan": {
@@ -69,10 +62,10 @@ def convertir_a_jpg(image_bytes, filename):
     """
     Detecta formato y convierte a JPG si es necesario
     Retorna: (jpg_bytes, formato_original, fue_convertida)
-    Maneja: JPG, PNG, HEIC, WEBP, BMP, TIFF, GIF, MPO
+    Nota: HEIC requiere conversión previa en Mac con: for f in *.HEIC; do convert "$f" "${f%.*}.jpg"; done
     """
     try:
-        # Detectar formato por extensión o contenido
+        # Detectar formato por extensión
         ext = filename.split('.')[-1].upper()
         
         # Para JPG/JPEG, intentar primero sin conversión
@@ -82,17 +75,23 @@ def convertir_a_jpg(image_bytes, filename):
                 if img.format and img.format.upper() in ['JPEG', 'JPG']:
                     return image_bytes, 'JPG', False
             except Exception:
-                pass  # Seguir con conversión
+                pass
+        
+        # Si es HEIC, reportar que necesita conversión
+        if ext in ['HEIC', 'HEIF']:
+            error_msg = "HEIC no soportado en webapp. Convierte en Mac: for f in *.HEIC; do convert \"$f\" \"${f%.*}.jpg\"; done"
+            st.warning(f"⚠️ {filename}: {error_msg}")
+            return None, ext, False
         
         # Intentar abrir con PIL
         img = Image.open(io.BytesIO(image_bytes))
         original_format = img.format or ext
         
-        # Si ya es JPG válido, retorna tal cual
+        # Si ya es JPG, retorna tal cual
         if original_format.upper() in ['JPEG', 'JPG']:
             return image_bytes, original_format, False
         
-        # Convertir a RGB si es necesario
+        # Convertir a RGB
         if img.mode in ('RGBA', 'LA', 'P'):
             rgb_img = Image.new('RGB', img.size, (255, 255, 255))
             if img.mode == 'RGBA':
@@ -103,7 +102,7 @@ def convertir_a_jpg(image_bytes, filename):
         elif img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Guardar como JPG en memoria con calidad alta
+        # Guardar como JPG
         jpg_buffer = io.BytesIO()
         img.save(jpg_buffer, format='JPEG', quality=95, optimize=False)
         jpg_bytes = jpg_buffer.getvalue()
@@ -111,7 +110,7 @@ def convertir_a_jpg(image_bytes, filename):
         return jpg_bytes, original_format, True
     
     except Exception as e:
-        error_msg = str(e)[:50]
+        error_msg = str(e)[:60]
         st.warning(f"⚠️ {filename}: {error_msg}")
         return None, filename.split('.')[-1].upper(), False
 
