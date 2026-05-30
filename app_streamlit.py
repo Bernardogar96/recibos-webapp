@@ -50,7 +50,7 @@ COMERCIOS_CAMPOS = {
     },
     "petromax": {
         "nombre": "PETROMAX",
-        "campos": ["Estación", "Folio", "WebID", "Monto"]
+        "campos": ["Estación", "Folio", "WebID", "Fecha", "Monto"]
     }
 }
 
