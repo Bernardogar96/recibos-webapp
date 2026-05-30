@@ -1,4 +1,5 @@
-streamlit
-anthropic
-openpyxl
-pillow
+streamlit>=1.40.0
+anthropic>=0.39.0
+openpyxl>=3.11.0
+Pillow>=10.0.0
+pillow-heif>=0.15.0

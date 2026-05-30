@@ -10,6 +10,13 @@ import tempfile
 from PIL import Image
 import io
 
+# Registrar HEIC/HEIF con Pillow
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+except ImportError:
+    pass  # pillow-heif no está instalado, seguir sin HEIC
+
 # Mapeo de comercios
 COMERCIOS_CAMPOS = {
     "carnes_finas_san_juan": {
