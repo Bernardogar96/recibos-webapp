@@ -295,10 +295,7 @@ with col1:
         
         # Preview
         with st.expander("👀 Ver preview de imágenes"):
-            cols = st.columns(min(3, len(uploaded_files)))
-            for idx, file in enumerate(uploaded_files[:6]):
-                with cols[idx % 3]:
-                    st.image(file, caption=file.name, width=150)
+            st.info(f"📸 {len(uploaded_files)} imagen(es) listas para procesar")
                     
         # Procesar
         if st.button("🚀 Procesar Recibos", type="primary", use_container_width=True):
